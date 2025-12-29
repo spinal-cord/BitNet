@@ -51,20 +51,45 @@ void stfma_free_buffers(void) {
 /* Encoding Conversion Functions                                             */
 /* ========================================================================== */
 
-uint8_t convert_bitnet_to_stfma_byte(uint8_t bitnet_byte) {
-    uint8_t result = 0;
-    for (int i = 0; i < 4; i++) {
-        uint8_t trit = (bitnet_byte >> (i * 2)) & 0b11;
-        uint8_t stfma_trit;
-        switch (trit) {
-            case 0: stfma_trit = 0b10; break; // -1
-            case 1: stfma_trit = 0b00; break; // 0
-            case 2: stfma_trit = 0b01; break; // +1
-            default: stfma_trit = 0b11; break; // Invalid
-        }
-        result |= (stfma_trit << (i * 2));
-    }
-    return result;
+/**
+ * Optimized Branchless Conversion
+ * Replaces loop+switch with parallel bitwise logic.
+ * 
+ * Logic:
+ * BitNet pairs:  00 (-1), 01 (0), 10 (+1), 11 (invalid)
+ * STFMA pairs:   10 (-1), 00 (0), 01 (+1), 11 (invalid)
+ *
+ * Transformation per trit (2-bit pair):
+ * Input 00 -> Output 10:  in_h=0, in_l=0 -> out_h=1, out_l=0
+ * Input 01 -> Output 00:  in_h=0, in_l=1 -> out_h=0, out_l=0
+ * Input 10 -> Output 01:  in_h=1, in_l=0 -> out_h=0, out_l=1
+ * Input 11 -> Output 11:  in_h=1, in_l=1 -> out_h=1, out_l=1
+ *
+ * Bitwise logic:
+ * out_low  = in_high (bit 1 of each pair)
+ * out_high = ~(in_high XOR in_low)
+ *
+ * Performance: Zero branches, processes all 4 trits in parallel,
+ * compiles to ~5 assembly instructions.
+ */
+uint8_t convert_bitnet_to_stfma_byte(uint8_t b) {
+    // Mask for low bits of each pair: 01010101 = 0x55
+    uint8_t low_bits = b & 0x55; 
+    
+    // Mask for high bits of each pair: 10101010 = 0xAA
+    uint8_t high_bits = b & 0xAA;
+
+    // STFMA Low Bit = BitNet High Bit (shifted right by 1)
+    uint8_t out_low = (high_bits >> 1);
+
+    // STFMA High Bit = ~(BitNet High Bit XOR BitNet Low Bit)
+    // Need to align high_bits with low_bits for XOR
+    uint8_t high_bits_shifted = (high_bits >> 1);
+    uint8_t xor_result = high_bits_shifted ^ low_bits;
+    uint8_t out_high = (~xor_result) & 0x55;
+    out_high = out_high << 1;  // Shift back to high bit positions
+
+    return out_high | out_low;
 }
 
 void convert_bitnet_to_stfma_array(
