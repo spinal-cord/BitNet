@@ -2,12 +2,6 @@ set(GGML_HEADERS_BITNET ../include/ggml-bitnet.h)
 set(GGML_SOURCES_BITNET ggml-bitnet-mad.cpp)
 set(GGML_SOURCES_BITNET ggml-bitnet-lut.cpp)
 
-# Add sparse-ternary-fma adapter if enabled
-if (BITNET_USE_STFMA)
-    list(APPEND GGML_HEADERS_BITNET ../include/ggml-bitnet-stfma.h)
-    list(APPEND GGML_SOURCES_BITNET ggml-bitnet-stfma.cpp)
-endif()
-
 include_directories(3rdparty/llama.cpp/ggml/include)
 
 if (NOT (CMAKE_C_COMPILER_ID MATCHES "Clang" OR CMAKE_C_COMPILER_ID STREQUAL "GNU") OR

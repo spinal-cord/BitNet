@@ -6,6 +6,10 @@
 #include <cmath>
 #include <cstring>
 
+#ifdef GGML_BITNET_USE_STFMA
+#include "ggml-bitnet-stfma.h"
+#endif
+
 #define QK_I2_S 128
 #define QK_I2 128
 
@@ -92,6 +96,14 @@ size_t quantize_i2_s(const float * src, void * dst, int64_t nrow, int64_t n_per_
 }
 
 void ggml_vec_dot_i2_i8_s(int n, float * s, size_t bs, const void * vx, size_t bx, const void * vy, size_t by, int nrc) {
+#ifdef GGML_BITNET_USE_STFMA
+    // Use sparse-ternary-fma for large operations
+    if (n >= GGML_BITNET_STFMA_THRESHOLD) {
+        ggml_vec_dot_i2_i8_stfma(n, s, bs, vx, bx, vy, by, nrc);
+        return;
+    }
+#endif
+
     const uint8_t *    x = (uint8_t *)vx;
     const int8_t  *    y = (int8_t *)vy;
 
