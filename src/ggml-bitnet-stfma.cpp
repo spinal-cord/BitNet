@@ -255,17 +255,21 @@ void sparse_ternary_fma_int32_avx2(
         size_t byte_idx = i / 4;
         uint16_t trit_packed = ((uint16_t)B_trit[byte_idx + 1] << 8) | B_trit[byte_idx];
         
-        // Extract 8 trits into array
-        int32_t trits[8];
-        for (int j = 0; j < 8; j++) {
-            trits[j] = (trit_packed >> (j * 2)) & 0b11;
-        }
+        // Unpack 8 2-bit trits directly into 8 int32 lanes using SIMD
+        // Broadcast the 16-bit value to all lanes as 32-bit
+        __m256i packed_vec = _mm256_set1_epi32(trit_packed);
         
-        // Load trits into vector
-        __m256i trit_vec = _mm256_setr_epi32(
-            trits[0], trits[1], trits[2], trits[3],
-            trits[4], trits[5], trits[6], trits[7]
+        // Create shift amounts for each lane: 0, 2, 4, 6, 8, 10, 12, 14
+        __m256i shift_amounts = _mm256_setr_epi32(
+            0, 2, 4, 6, 8, 10, 12, 14
         );
+        
+        // Shift each lane by its corresponding amount
+        __m256i shifted = _mm256_srlv_epi32(packed_vec, shift_amounts);
+        
+        // Mask to extract only the lowest 2 bits from each lane
+        __m256i mask_2bits = _mm256_set1_epi32(0b11);
+        __m256i trit_vec = _mm256_and_si256(shifted, mask_2bits);
         
         // Create nonzero mask: true if trit != 0b00
         __m256i nonzero_cmp = _mm256_cmpgt_epi32(trit_vec, zero);
@@ -331,14 +335,26 @@ void sparse_ternary_fma_int32_avx512(
         size_t byte_idx = i / 4;
         uint32_t trit_packed = *(uint32_t*)&B_trit[byte_idx];
         
-        // Extract 16 trits into array
-        int32_t trits[16];
-        for (int j = 0; j < 16; j++) {
-            trits[j] = (trit_packed >> (j * 2)) & 0b11;
-        }
+        // Unpack 16 2-bit trits directly into 16 int32 lanes using SIMD
+        // Strategy: Broadcast the 32-bit value, then use shifts and masks
+        // to extract each 2-bit pair into its own 32-bit lane
         
-        // Load trits into vector
-        __m512i trit_vec = _mm512_loadu_si512(trits);
+        // Broadcast the packed trits to all lanes
+        __m512i packed_vec = _mm512_set1_epi32(trit_packed);
+        
+        // Create shift amounts for each lane: 0, 2, 4, 6, ..., 30
+        // Lane i needs to shift right by (i * 2) bits
+        __m512i shift_amounts = _mm512_setr_epi32(
+            0, 2, 4, 6, 8, 10, 12, 14,
+            16, 18, 20, 22, 24, 26, 28, 30
+        );
+        
+        // Shift each lane by its corresponding amount
+        __m512i shifted = _mm512_srlv_epi32(packed_vec, shift_amounts);
+        
+        // Mask to extract only the lowest 2 bits from each lane
+        __m512i mask_2bits = _mm512_set1_epi32(0b11);
+        __m512i trit_vec = _mm512_and_si512(shifted, mask_2bits);
         
         // Create nonzero mask
         __mmask16 nonzero_mask = _mm512_cmpneq_epi32_mask(trit_vec, zero);
