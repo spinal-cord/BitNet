@@ -1,0 +1,64 @@
+/**
+ * NEON Support Detection
+ * This file is configured by CMake to check NEON support at runtime
+ */
+
+#include <stdio.h>
+
+#if defined(__linux__) && (defined(__arm__) || defined(__aarch64__))
+#include <sys/auxv.h>
+#include <asm/hwcap.h>
+#endif
+
+int has_neon_support(void) {
+#if defined(__aarch64__)
+    // ARM64 always has NEON (Advanced SIMD)
+    return 1;
+#elif defined(__ARM_NEON__)
+    // Check via CPU features on Linux/ARM
+    #ifdef __linux__
+        unsigned long hwcap = getauxval(AT_HWCAP);
+        #ifdef HWCAP_NEON
+            if (hwcap & HWCAP_NEON) return 1;
+        #endif
+        #ifdef HWCAP_ASIMD
+            if (hwcap & HWCAP_ASIMD) return 1;
+        #endif
+        
+        // Fallback: check /proc/cpuinfo
+        FILE* cpuinfo = fopen("/proc/cpuinfo", "r");
+        if (cpuinfo) {
+            char line[256];
+            while (fgets(line, sizeof(line), cpuinfo)) {
+                if (strstr(line, "Features")) {
+                    if (strstr(line, "neon") || strstr(line, "asimd")) {
+                        fclose(cpuinfo);
+                        return 1;
+                    }
+                }
+            }
+            fclose(cpuinfo);
+        }
+    #endif
+    return 0;
+#else
+    return 0;
+#endif
+}
+
+const char* get_simd_implementation(void) {
+#if defined(__aarch64__)
+    return "ARM64 NEON";
+#elif defined(__ARM_NEON__)
+    if (has_neon_support()) {
+        return "ARM NEON";
+    }
+    return "Scalar";
+#elif defined(__AVX512F__)
+    return "AVX-512";
+#elif defined(__AVX2__)
+    return "AVX2";
+#else
+    return "Scalar";
+#endif
+}
