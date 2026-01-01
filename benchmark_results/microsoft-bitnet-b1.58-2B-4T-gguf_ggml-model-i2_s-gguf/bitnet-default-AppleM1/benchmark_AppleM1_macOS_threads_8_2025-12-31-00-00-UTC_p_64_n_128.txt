@@ -1,0 +1,12 @@
+CPU: Apple M1
+OS: macOS
+Date (UTC): 2025-12-31 00:00:00 UTC+0000
+Threads: 8
+p = 64, n = 128
+------------------------
+| model                          |       size |     params | backend    | ngl | threads | n_batch |          test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | --: | ------: | ------: | ------------: | -------------------: |
+| bitnet-b1.58 2B I2_S - 2 bpw ternary |   1.71 GiB |     2.74 B | Metal      |   0 |       8 |       1 |          pp64 |         27.98 ± 5.04 |
+| bitnet-b1.58 2B I2_S - 2 bpw ternary |   1.71 GiB |     2.74 B | Metal      |   0 |       8 |       1 |         tg128 |         26.33 ± 1.76 |
+
+build: 40ed0f29 (3960)
