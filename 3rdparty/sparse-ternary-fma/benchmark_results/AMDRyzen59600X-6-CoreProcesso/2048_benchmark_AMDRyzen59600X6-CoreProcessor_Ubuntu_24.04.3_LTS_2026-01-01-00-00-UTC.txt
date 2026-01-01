@@ -1,0 +1,88 @@
+CPU: AMD Ryzen 5 9600X 6-Core Processor
+OS: Ubuntu_24.04.3_LTS
+Date (UTC): 2026-01-01 00:00:00 UTC+0000
+------------------------
+
+╔════════════════════════════════════════════════════════════════╗
+║     Sparse Ternary FMA Kernel - Comprehensive Benchmark       ║
+║                                                                ║
+║  Implementation: AVX-512 (SIMD)
+║  AVX-512 Support: Yes
+╚════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+CORRECTNESS TESTS
+═══════════════════════════════════════════════════════════════════
+
+Test 1: Encode/Decode Correctness
+----------------------------------
+  -1 → 0x02 → -1 [PASS]
+   0 → 0x00 →  0 [PASS]
+   1 → 0x01 →  1 [PASS]
+
+Test 2: Pack/Unpack Correctness
+--------------------------------
+  Array size: 1024 trits
+  Packed size: 256 bytes (25.0% of original)
+  Errors: 0
+  Result: [PASS]
+
+Test 3: Ternary Multiply Correctness
+-------------------------------------
+  12345 × -1 = -12345 (expected -12345) [PASS]
+  12345 ×  0 = 0 (expected 0) [PASS]
+  12345 ×  1 = 12345 (expected 12345) [PASS]
+
+Test 4: Sparse Ternary FMA Correctness
+---------------------------------------
+  Array size: 256
+  Errors: 0
+  Result: [PASS]
+
+═══════════════════════════════════════════════════════════════════
+PERFORMANCE BENCHMARKS
+═══════════════════════════════════════════════════════════════════
+
+Benchmark 1: Encoding Overhead
+-------------------------------
+  Array size: 2048 trits
+  Iterations: 100000
+  Pack time: 45.531 ms (0.455 μs/op)
+  Unpack time: 58.796 ms (0.588 μs/op)
+
+Benchmark 2: Density Gain Validation
+-------------------------------------
+  Array size: 2048
+  Iterations: 10000
+  8-bit encoding: 4.459 ms (0.446 μs/op)
+  2-bit encoding: 8.428 ms (0.843 μs/op)
+  Speedup: 0.53×
+  Memory saved: 1536 bytes (75.0%)
+
+Benchmark 3: SIMD Throughput
+-----------------------------
+  Array size: 2048
+  Iterations: 10000
+  Scalar: 8.719 ms (0.872 μs/op)
+  SIMD: 4.988 ms (0.499 μs/op)
+  Speedup: 1.75×
+  Throughput (scalar): 2348.9 Mtrits/s
+  Throughput (SIMD): 4105.7 Mtrits/s
+
+Benchmark 4: Sparse Optimization
+---------------------------------
+  Array size: 2048
+  Hamming weight: 128 (6.2%)
+  Iterations: 10000
+  Dense: 11.888 ms (1.189 μs/op)
+  Sparse: 0.407 ms (0.041 μs/op)
+  Speedup: 29.24× (theoretical: 16.0×)
+
+═══════════════════════════════════════════════════════════════════
+SUMMARY
+═══════════════════════════════════════════════════════════════════
+
+✓ All correctness tests PASSED
+✓ Performance benchmarks completed successfully
+✓ Kernel is ready for production use
+
