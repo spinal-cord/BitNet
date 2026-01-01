@@ -1,0 +1,12 @@
+CPU: AMD Ryzen 5 9600X 6-Core Processor
+OS: Ubuntu_24.04.3_LTS
+Date (UTC): 2026-01-01 00:00:00 UTC+0000
+Threads: 1
+p = 64, n = 128
+------------------------
+| model                          |       size |     params | backend    | threads | n_batch |          test |                  t/s |
+| ------------------------------ | ---------: | ---------: | ---------- | ------: | ------: | ------------: | -------------------: |
+| bitnet-b1.58 2B I2_S - 2 bpw ternary |   1.71 GiB |     2.74 B | CPU        |       1 |       1 |          pp64 |         28.79 ± 0.26 |
+| bitnet-b1.58 2B I2_S - 2 bpw ternary |   1.71 GiB |     2.74 B | CPU        |       1 |       1 |         tg128 |         27.83 ± 0.03 |
+
+build: 40ed0f29 (3960)
