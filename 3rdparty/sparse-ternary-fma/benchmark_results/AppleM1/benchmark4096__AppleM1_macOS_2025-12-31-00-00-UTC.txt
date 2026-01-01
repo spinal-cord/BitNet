@@ -1,0 +1,88 @@
+CPU: Apple M1
+OS: macOS
+Date (UTC): 2025-12-31 00:00:00 UTC+0000
+------------------------
+
+╔════════════════════════════════════════════════════════════════╗
+║     Sparse Ternary FMA Kernel - Comprehensive Benchmark       ║
+║                                                                ║
+║  Implementation: Scalar (Reference)
+║  AVX-512 Support: No
+╚════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════
+CORRECTNESS TESTS
+═══════════════════════════════════════════════════════════════════
+
+Test 1: Encode/Decode Correctness
+----------------------------------
+  -1 → 0x02 → -1 [PASS]
+   0 → 0x00 →  0 [PASS]
+   1 → 0x01 →  1 [PASS]
+
+Test 2: Pack/Unpack Correctness
+--------------------------------
+  Array size: 1024 trits
+  Packed size: 256 bytes (25.0% of original)
+  Errors: 0
+  Result: [PASS]
+
+Test 3: Ternary Multiply Correctness
+-------------------------------------
+  12345 × -1 = -12345 (expected -12345) [PASS]
+  12345 ×  0 = 0 (expected 0) [PASS]
+  12345 ×  1 = 12345 (expected 12345) [PASS]
+
+Test 4: Sparse Ternary FMA Correctness
+---------------------------------------
+  Array size: 256
+  Errors: 0
+  Result: [PASS]
+
+═══════════════════════════════════════════════════════════════════
+PERFORMANCE BENCHMARKS
+═══════════════════════════════════════════════════════════════════
+
+Benchmark 1: Encoding Overhead
+-------------------------------
+  Array size: 4096 trits
+  Iterations: 100000
+  Pack time: 123.703 ms (1.237 μs/op)
+  Unpack time: 271.475 ms (2.715 μs/op)
+
+Benchmark 2: Density Gain Validation
+-------------------------------------
+  Array size: 4096
+  Iterations: 10000
+  8-bit encoding: 31.412 ms (3.141 μs/op)
+  2-bit encoding: 37.656 ms (3.766 μs/op)
+  Speedup: 0.83×
+  Memory saved: 3072 bytes (75.0%)
+
+Benchmark 3: SIMD Throughput
+-----------------------------
+  Array size: 4096
+  Iterations: 10000
+  Scalar: 38.534 ms (3.853 μs/op)
+  SIMD: 37.904 ms (3.790 μs/op)
+  Speedup: 1.02×
+  Throughput (scalar): 1063.0 Mtrits/s
+  Throughput (SIMD): 1080.6 Mtrits/s
+
+Benchmark 4: Sparse Optimization
+---------------------------------
+  Array size: 4096
+  Hamming weight: 128 (3.1%)
+  Iterations: 10000
+  Dense: 26.347 ms (2.635 μs/op)
+  Sparse: 0.707 ms (0.071 μs/op)
+  Speedup: 37.27× (theoretical: 32.0×)
+
+═══════════════════════════════════════════════════════════════════
+SUMMARY
+═══════════════════════════════════════════════════════════════════
+
+✓ All correctness tests PASSED
+✓ Performance benchmarks completed successfully
+✓ Kernel is ready for production use
+
