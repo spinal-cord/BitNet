@@ -20,6 +20,13 @@
  * limitations under the License.
  */
 
+/* Enable POSIX.1-2001 features (e.g., clock_gettime) for non-Apple platforms.
+ * Defining this on macOS causes conflicts with BSD-type definitions in system headers.
+ */
+#ifndef __APPLE__
+#define _POSIX_C_SOURCE 200112L
+#endif
+
 #include "../include/sparse_ternary_fma.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,14 +34,45 @@
 #include <string.h>
 #include <math.h>
 
+/* Platform-specific headers */
+#ifdef __APPLE__
+#include <mach/mach_time.h>
+#include <stdint.h>
+#elif defined(_WIN32)
+#include <windows.h>
+#else
+/* Linux/Unix - already has time.h for clock_gettime */
+#endif
+
 /* ========================================================================== */
 /* Timing Utilities                                                          */
 /* ========================================================================== */
 
 static inline double get_time_ms(void) {
+#ifdef __APPLE__
+    /* macOS specific high-resolution timer */
+    static mach_timebase_info_data_t timebase_info = {0};
+    if (timebase_info.denom == 0) {
+        mach_timebase_info(&timebase_info);
+    }
+    uint64_t time_ns = mach_absolute_time();
+    time_ns = time_ns * timebase_info.numer / timebase_info.denom;
+    return (double)time_ns / 1000000.0; // Convert nanoseconds to milliseconds
+#elif defined(_POSIX_MONOTONIC_CLOCK) || defined(__linux__) || defined(__unix__)
+    /* Use POSIX high-resolution monotonic clock if available */
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
     return ts.tv_sec * 1000.0 + ts.tv_nsec / 1000000.0;
+#elif defined(_WIN32)
+    /* Windows high-resolution timer */
+    LARGE_INTEGER frequency, counter;
+    QueryPerformanceFrequency(&frequency);
+    QueryPerformanceCounter(&counter);
+    return (counter.QuadPart * 1000.0) / frequency.QuadPart;
+#else
+    /* Fallback to standard clock() for portability */
+    return (double)clock() * 1000.0 / CLOCKS_PER_SEC;
+#endif
 }
 
 /* ========================================================================== */
